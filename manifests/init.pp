@@ -29,7 +29,7 @@ class nginx(
   }
   else {
     exec { 'reload-nginx':
-      command     => 'true',
+      command     => true,
       refreshonly => true,
     }
   }

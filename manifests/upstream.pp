@@ -14,7 +14,7 @@ define nginx::upstream(
   $check_http_send = '',
   $check_http_expect_alive = '',
 ) {
-  
+
   validate_bool($check_health)
   validate_bool($check_default_down)
   validate_re($check_type, ['^tcp$','^http$','^ssl_hello$','^mysql$','^ajp$','^fastcgi$'])

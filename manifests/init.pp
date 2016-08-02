@@ -5,6 +5,8 @@ class nginx(
   $config          = '',
   $fastcgi_params  = '',
   $service_ensure  = 'running',
+  $user            = 'www-data',
+  $group           = 'www-data',
 ) {
 
   package { 'nginx':
@@ -45,19 +47,23 @@ class nginx(
     require => Package['nginx'],
   }
 
-  $use_config = $config ? {
-    ''      => 'puppet:///modules/nginx/nginx.conf',
-    default => $config,
-  }
-
   file { '/etc/nginx/nginx.conf':
     ensure  => 'present',
-    source  => $use_config,
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
     require => Package['nginx'],
     notify  => Service['nginx'],
+  }
+
+  if ($config) {
+    File['/etc/nginx/nginx.conf'] {
+      source => $config,
+    }
+  } else {
+    File['/etc/nginx/nginx.conf'] {
+      content => template('nginx/nginx.conf.erb'),
+    }
   }
 
   $use_fastcgi_params = $fastcgi_params ? {
@@ -77,8 +83,8 @@ class nginx(
 
   file { '/var/cache/nginx/':
     ensure => 'directory',
-    owner  => 'www-data',
-    group  => 'www-data',
+    owner  => $user,
+    group  => $group,
     mode   => '0750',
   }
 

@@ -14,7 +14,7 @@ define nginx::upstream(
   $check_http_send = '',
   $check_http_expect_alive = '',
 ) {
-  
+
   validate_bool($check_health)
   validate_bool($check_default_down)
   validate_re($check_type, ['^tcp$','^http$','^ssl_hello$','^mysql$','^ajp$','^fastcgi$'])
@@ -31,7 +31,7 @@ define nginx::upstream(
   }
 
   file { $target_dir:
-    ensure => $ensure ? {
+    ensure  => $ensure ? {
       'present' => 'directory',
       'absent'  => 'absent',
     },
@@ -42,7 +42,7 @@ define nginx::upstream(
 
   file { $target_file:
     replace => false,
-    notify  => Exec['reload-nginx'],
+    notify  => Service['nginx'],
   }
 
   file { "${target_dir}/0_header.conf":
@@ -67,6 +67,6 @@ define nginx::upstream(
     command     => $command,
     refreshonly => true,
     require     => File[$target_dir],
-    notify      => Exec['reload-nginx'],
+    notify      => Service['nginx'],
   }
 }

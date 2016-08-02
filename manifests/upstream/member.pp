@@ -1,12 +1,13 @@
+# Class to manage nginx site upstreams
 define nginx::upstream::member(
   $upstream,
-  $ensure = 'present',
-  $host = '',
-  $down = false,
-  $weight = 1,
-  $max_fails = 0,
+  $ensure       = 'present',
+  $host         = '',
+  $down         = false,
+  $weight       = 1,
+  $max_fails    = 0,
   $fail_timeout = 0,
-  $backup = false
+  $backup       = false
 ) {
 
   $use_host = $host ? {
@@ -15,12 +16,12 @@ define nginx::upstream::member(
   }
   $member_path = "/etc/nginx/upstreams.d/${upstream}/1_${name}.conf"
   file { $member_path:
-    owner   => root,
-    group   => root,
-    mode    => 0644,
-    content => template('nginx/upstream.member.erb'),
     ensure  => $ensure,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    content => template('nginx/upstream.member.erb'),
     notify  => Exec["rebuild-nginx-upstream-${upstream}"],
-   require  => File["/etc/nginx/upstreams.d/${upstream}/"]
+    require => File["/etc/nginx/upstreams.d/${upstream}/"]
   }
 }

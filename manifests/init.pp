@@ -1,74 +1,95 @@
-class nginx($package = 'full', $version = 'installed', $config = '', $fastcgi_params = '') {
-    package { 'nginx':
-        name => "nginx-${package}",
-        ensure => $version,
-    }
+# - Class to install and manage nginx
+class nginx(
+  $package         = 'full',
+  $version         = 'installed',
+  $config          = '',
+  $fastcgi_params  = '',
+  $service_ensure  = 'running',
+  $user            = 'www-data',
+  $group           = 'www-data',
+) {
 
-    service { 'nginx':
-        ensure => running,
-        enable => true,
-        hasrestart => true,
-        hasstatus => true,
-        subscribe => File['/etc/nginx/nginx.conf'],
-    }
+  package { 'nginx':
+    ensure => $version,
+    name   => "nginx-${package}",
+  }
 
+  service { 'nginx':
+    ensure     => $service_ensure,
+    enable     => true,
+    hasrestart => true,
+    hasstatus  => true,
+    restart    => '/usr/sbin/nginx -t -c /etc/nginx/nginx.conf && /etc/init.d/nginx reload',
+    subscribe  => File['/etc/nginx/nginx.conf'],
+  }
+
+  if $service_ensure == 'running' {
     exec { 'reload-nginx':
-        command => '/etc/init.d/nginx reload',
-        refreshonly => true,
+      command     => '/usr/sbin/nginx -t -c /etc/nginx/nginx.conf && /etc/init.d/nginx reload',
+      refreshonly => true,
     }
-
-    file { [
-        '/etc/nginx/conf.d/',
-        '/etc/nginx/upstreams.d/',
-        '/etc/nginx/sites-enabled',
-        '/etc/nginx/sites-available'
-    ]:
-		ensure  => 'directory',
-		owner   => 'root',
-		group   => 'root',
-		mode    => '0755',
-		require => Package['nginx'],
-	}
-
-	$use_config = $config ? {
-	    ''      => 'puppet:///modules/nginx/nginx.conf',
-	    default => $config,
-	}
-
-    file { '/etc/nginx/nginx.conf':
-        ensure  => 'present',
-        source  => $use_config,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        require => Package['nginx'],
-        notify  => Exec['reload-nginx'],
-	}
-
-    $use_fastcgi_params = $fastcgi_params ? {
-        ''      => 'puppet:///modules/nginx/fastcgi_params',
-        default => $fastcgi_params,
+  }
+  else {
+    exec { 'reload-nginx':
+      command     => true,
+      refreshonly => true,
     }
+  }
 
-	file { '/etc/nginx/fastcgi_params':
-        ensure  => 'present',
-        source  => $use_fastcgi_params,
-        owner   => 'root',
-        group   => 'root',
-        mode    => '0644',
-        require => Package['nginx'],
-        notify  => Exec['reload-nginx'],
-	}
+  file { ['/etc/nginx/conf.d/',
+    '/etc/nginx/upstreams.d/',
+    '/etc/nginx/sites-enabled',
+    '/etc/nginx/sites-available']:
+    ensure  => 'directory',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0755',
+    require => Package['nginx'],
+  }
 
-	file { '/var/cache/nginx/':
-		ensure => directory,
-		owner => 'www-data',
-		group => 'www-data',
-		mode => 0750,
-	}
+  file { '/etc/nginx/nginx.conf':
+    ensure  => 'present',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    require => Package['nginx'],
+    notify  => Service['nginx'],
+  }
 
-	# remove the default site
-	nginx::site { 'default':
-		ensure => absent,
-	}
+  if ($config) {
+    File['/etc/nginx/nginx.conf'] {
+      source => $config,
+    }
+  } else {
+    File['/etc/nginx/nginx.conf'] {
+      content => template('nginx/nginx.conf.erb'),
+    }
+  }
+
+  $use_fastcgi_params = $fastcgi_params ? {
+    ''      => 'puppet:///modules/nginx/fastcgi_params',
+    default => $fastcgi_params,
+  }
+
+  file { '/etc/nginx/fastcgi_params':
+    ensure  => 'present',
+    source  => $use_fastcgi_params,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    require => Package['nginx'],
+    notify  => Service['nginx'],
+  }
+
+  file { '/var/cache/nginx/':
+    ensure => 'directory',
+    owner  => $user,
+    group  => $group,
+    mode   => '0750',
+  }
+
+  # remove the default site
+  nginx::site { 'default':
+    ensure => 'absent',
+  }
 }

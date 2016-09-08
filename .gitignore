@@ -1,0 +1,8 @@
+pkg/
+coverage/
+.bundle/
+vendor/bundle/
+.tmp
+modules
+.librarian
+Puppetfile.lock

@@ -1,0 +1,14 @@
+{
+    "name": "chrisboulton-nginx",
+    "version": "0.0.4",
+    "license": "MIT",
+    "summary": "Install and manage nginx",
+    "description": "A different approach to managing nginx sites available/enabled, and configuration includes. Requires Nginx 1.1.11+",
+    "author": "Chris Boulton <chris@chrisboulton.com>",
+    "source": "https://github.com/chrisboulton/puppet-nginx",
+    "project_page": "https://github.com/chrisboulton/puppet-nginx",
+    "issues_url": "https://github.com/chrisboulton/puppet-nginx/issues",
+    "dependencies": [
+        {"name":"puppetlabs-stdlib","version_requirement":">= 1.0.0"}
+     ]
+}
